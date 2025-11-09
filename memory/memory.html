@@ -13,10 +13,10 @@
       theme: {
         extend: {
           colors: {
-            primary: '#4F46E5', // 主色调：靛蓝色，代表知识和专注
-            secondary: '#10B981', // 辅助色：绿色，代表进步和正确
-            danger: '#EF4444',    // 错误色：红色
-            neutral: '#64748B',   // 中性色：灰色
+            primary: '#4F46E5',
+            secondary: '#10B981',
+            danger: '#EF4444',
+            neutral: '#64748B',
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -54,15 +54,16 @@
         <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
           <i class="fa fa-list-ul text-primary mr-2"></i>单词表输入
         </h2>
-        <p class="text-neutral text-sm mb-4">请输入中英文单词对照（一行一组，格式：英文,中文 或 英文 中文）</p>
+        <p class="text-neutral text-sm mb-4">请输入中英文对照（一行一组，中文字符前的所有英文将被识别为一个词组）</p>
         <div class="space-y-4">
           <textarea 
             id="wordListInput" 
             class="w-full h-40 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom resize-none"
             placeholder="例如：
-apple,苹果
-book 书
-computer 电脑
+apple 苹果
+look at 看
+Software Development Life Cycle 软件开发生命周期（SDLC）
+object-oriented programming 面向对象编程
 ..."
           ></textarea>
           <div class="flex flex-wrap gap-3">
@@ -101,7 +102,7 @@ computer 电脑
         
         <!-- 题目显示 -->
         <div id="questionContainer" class="mb-6 p-5 border border-gray-100 rounded-lg bg-gray-50 min-h-[100px] flex items-center justify-center">
-          <p class="text-2xl font-medium text-gray-700" id="questionText">准备开始练习...</p>
+          <p class="text-xl md:text-2xl font-medium text-gray-700" id="questionText">准备开始练习...</p>
         </div>
         
         <!-- 答案输入 -->
@@ -243,18 +244,18 @@ computer 电脑
       }
     });
     
-    // 加载示例单词表
+    // 加载示例单词表（包含多词短语示例）
     function loadExample() {
-      const example = `apple,苹果
-banana,香蕉
-book,书
-computer,电脑
-friend,朋友
-happy,开心的
-school,学校
-teacher,老师
-water,水
-family,家庭`;
+      const example = `apple 苹果
+banana 香蕉
+look at 看
+get up 起床
+Software Development Life Cycle 软件开发生命周期（SDLC）
+object-oriented programming 面向对象编程
+HyperText Markup Language HTML 超文本标记语言
+Agile methodology 敏捷开发方法
+Machine Learning 机器学习
+Artificial Intelligence 人工智能`;
       wordListInput.value = example;
     }
     
@@ -263,7 +264,7 @@ family,家庭`;
       wordListInput.value = '';
     }
     
-    // 解析单词列表
+    // 解析单词列表 - 核心改进：将中文字符前的所有英文内容识别为一个完整词组
     function parseWordList(input) {
       const lines = input.trim().split('\n');
       const words = [];
@@ -271,14 +272,26 @@ family,家庭`;
       lines.forEach((line, index) => {
         if (!line.trim()) return;
         
-        // 支持逗号或空格分隔
-        let parts = line.split(/[,，\s]+/).filter(part => part.trim() !== '');
+        // 使用正则表达式匹配中文字符的起始位置
+        // 中文字符的Unicode范围：\u4e00-\u9fa5
+        const chineseCharMatch = line.match(/[\u4e00-\u9fa5]/);
         
-        if (parts.length >= 2) {
-          words.push({
-            english: parts[0].trim(),
-            chinese: parts.slice(1).join(' ').trim()
-          });
+        if (chineseCharMatch) {
+          // 找到第一个中文字符的索引
+          const chineseStartIndex = chineseCharMatch.index;
+          
+          // 提取英文部分（第一个中文字符之前的所有内容）
+          const englishPart = line.substring(0, chineseStartIndex).trim();
+          
+          // 提取中文部分（从第一个中文字符到行尾）
+          const chinesePart = line.substring(chineseStartIndex).trim();
+          
+          if (englishPart && chinesePart) {
+            words.push({
+              english: englishPart,
+              chinese: chinesePart
+            });
+          }
         }
       });
       
@@ -298,7 +311,7 @@ family,家庭`;
       wordList = parseWordList(input);
       
       if (wordList.length < 1) {
-        showFeedback('请输入有效的单词表（格式：英文,中文 或 英文 中文）', 'error');
+        showFeedback('请输入有效的单词表（确保每行包含英文词组和中文翻译）', 'error');
         return;
       }
       
@@ -388,9 +401,9 @@ family,家庭`;
       const userAnswer = answerInput.value.trim();
       const correctAnswer = currentQuestion.answer;
       
-      // 检查答案是否正确（不区分大小写）
+      // 检查答案是否正确（英文答案不区分大小写，但保留空格等格式）
       const isCorrect = currentQuestion.type === 'chineseToEnglish' 
-        ? userAnswer.toLowerCase() === correctAnswer.toLowerCase()
+        ? compareEnglishAnswers(userAnswer, correctAnswer)
         : userAnswer === correctAnswer;
       
       // 显示反馈
@@ -412,6 +425,11 @@ family,家庭`;
       
       // 增加题目索引
       currentQuestionIndex++;
+    }
+    
+    // 比较英文答案（忽略大小写，但保留空格）
+    function compareEnglishAnswers(userAnswer, correctAnswer) {
+      return userAnswer.toLowerCase() === correctAnswer.toLowerCase();
     }
     
     // 显示反馈
