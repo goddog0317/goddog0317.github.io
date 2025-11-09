@@ -181,7 +181,7 @@ object-oriented programming 面向对象编程
             id="retryWrongBtn" 
             class="px-6 py-2.5 bg-secondary text-white rounded-lg hover:bg-secondary/90 focus:ring-4 focus:ring-secondary/20 font-medium transition-custom flex items-center"
           >
-            <i class="fa fa-exclamation-circle mr-2"></i>只练习错误单词(没做完)
+            <i class="fa fa-exclamation-circle mr-2"></i>只练习错误单词
           </button>
         </div>
       </section>
@@ -189,7 +189,7 @@ object-oriented programming 面向对象编程
     
     <!-- 页脚 -->
     <footer class="mt-16 text-center text-neutral text-sm">
-      <p>单词记忆练习 &copy; 2023</p>
+      <p>单词记忆练习 &copy; 2025</p>
     </footer>
   </div>
 
@@ -202,6 +202,7 @@ object-oriented programming 面向对象编程
     let correctCount = 0;       // 正确计数
     let wrongCount = 0;         // 错误计数
     let wrongWords = [];        // 错误的单词
+    let persistentWrongWords = []; // 用于保存错误单词，避免在"只练习错误单词"时被清空
     
     // DOM 元素
     const wordInputSection = document.getElementById('wordInputSection');
@@ -244,7 +245,7 @@ object-oriented programming 面向对象编程
       }
     });
     
-    // 加载示例单词表（包含多词短语示例）
+    // 加载示例单词表
     function loadExample() {
       const example = `apple 苹果
 banana 香蕉
@@ -264,32 +265,27 @@ Artificial Intelligence 人工智能`;
       wordListInput.value = '';
     }
     
-    // 解析单词列表 - 核心改进：将中文字符前的所有英文内容识别为一个完整词组
+    // 解析单词列表
     function parseWordList(input) {
       const lines = input.trim().split('\n');
       const words = [];
       
-      lines.forEach((line, index) => {
+      lines.forEach((line) => {
         if (!line.trim()) return;
         
-        // 使用正则表达式匹配中文字符的起始位置
-        // 中文字符的Unicode范围：\u4e00-\u9fa5
+        // 匹配中文字符的起始位置
         const chineseCharMatch = line.match(/[\u4e00-\u9fa5]/);
         
         if (chineseCharMatch) {
-          // 找到第一个中文字符的索引
           const chineseStartIndex = chineseCharMatch.index;
-          
-          // 提取英文部分（第一个中文字符之前的所有内容）
           const englishPart = line.substring(0, chineseStartIndex).trim();
-          
-          // 提取中文部分（从第一个中文字符到行尾）
           const chinesePart = line.substring(chineseStartIndex).trim();
           
           if (englishPart && chinesePart) {
             words.push({
               english: englishPart,
-              chinese: chinesePart
+              chinese: chinesePart,
+              id: englishPart.toLowerCase().replace(/\s+/g, '-') // 唯一标识
             });
           }
         }
@@ -316,7 +312,7 @@ Artificial Intelligence 人工智能`;
       }
       
       // 初始化练习参数
-      resetPracticeState();
+      fullResetPracticeState();
       createQuestions(wordList);
       
       // 显示练习区域
@@ -328,12 +324,25 @@ Artificial Intelligence 人工智能`;
       nextQuestion();
     }
     
-    // 重置练习状态
-    function resetPracticeState() {
+    // 完全重置练习状态（用于新练习开始时）
+    function fullResetPracticeState() {
       currentQuestionIndex = 0;
       correctCount = 0;
       wrongCount = 0;
       wrongWords = [];
+      persistentWrongWords = []; // 完全重置时才清空持久化错误单词
+      questions = [];
+      feedbackContainer.classList.add('hidden');
+      checkAnswerBtn.classList.remove('hidden');
+      nextQuestionBtn.classList.add('hidden');
+    }
+    
+    // 部分重置练习状态（保留错误单词，用于重新练习时）
+    function partialResetPracticeState() {
+      currentQuestionIndex = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      wrongWords = []; // 只清空当前练习的错误记录
       questions = [];
       feedbackContainer.classList.add('hidden');
       checkAnswerBtn.classList.remove('hidden');
@@ -342,12 +351,9 @@ Artificial Intelligence 人工智能`;
     
     // 创建题目
     function createQuestions(words) {
-      // 复制单词列表以避免修改原数组
       const wordsCopy = [...words];
       
-      // 为每个单词创建两个可能的题目类型：看英文写中文，看中文写英文
       wordsCopy.forEach(word => {
-        // 50%概率创建看英文写中文的题目
         if (Math.random() > 0.5) {
           questions.push({
             type: 'englishToChinese',
@@ -365,34 +371,24 @@ Artificial Intelligence 人工智能`;
         }
       });
       
-      // 随机打乱题目顺序
       shuffleArray(questions);
     }
     
     // 显示下一题
     function nextQuestion() {
       if (currentQuestionIndex >= questions.length) {
-        // 所有题目完成，显示结果
         showResult();
         return;
       }
       
-      // 重置UI状态
       feedbackContainer.classList.add('hidden');
       checkAnswerBtn.classList.remove('hidden');
       nextQuestionBtn.classList.add('hidden');
       answerInput.value = '';
       
-      // 获取当前题目
       currentQuestion = questions[currentQuestionIndex];
-      
-      // 显示题目
       questionText.textContent = currentQuestion.question;
-      
-      // 更新进度
       progressText.textContent = `${currentQuestionIndex + 1}/${questions.length}`;
-      
-      // 聚焦到输入框
       answerInput.focus();
     }
     
@@ -400,36 +396,37 @@ Artificial Intelligence 人工智能`;
     function checkAnswer() {
       const userAnswer = answerInput.value.trim();
       const correctAnswer = currentQuestion.answer;
+      const currentWord = currentQuestion.word;
       
-      // 检查答案是否正确（英文答案不区分大小写，但保留空格等格式）
+      // 检查答案是否正确
       const isCorrect = currentQuestion.type === 'chineseToEnglish' 
-        ? compareEnglishAnswers(userAnswer, correctAnswer)
+        ? userAnswer.toLowerCase() === correctAnswer.toLowerCase()
         : userAnswer === correctAnswer;
       
-      // 显示反馈
+      // 显示反馈并更新计数
       if (isCorrect) {
         showFeedback(`正确！答案是：${correctAnswer}`, 'success');
         correctCount++;
       } else {
         showFeedback(`错误！正确答案是：${correctAnswer}`, 'error');
         wrongCount++;
-        // 添加到错误单词列表（避免重复）
-        if (!wrongWords.some(w => w.english === currentQuestion.word.english)) {
-          wrongWords.push(currentQuestion.word);
+        
+        // 添加到当前错误单词列表
+        const isAlreadyInWrongList = wrongWords.some(word => word.id === currentWord.id);
+        if (!isAlreadyInWrongList) {
+          wrongWords.push(currentWord);
+          
+          // 同时添加到持久化错误单词列表（用于"只练习错误单词"功能）
+          const isAlreadyInPersistentList = persistentWrongWords.some(word => word.id === currentWord.id);
+          if (!isAlreadyInPersistentList) {
+            persistentWrongWords.push(currentWord);
+          }
         }
       }
       
-      // 更新按钮状态
       checkAnswerBtn.classList.add('hidden');
       nextQuestionBtn.classList.remove('hidden');
-      
-      // 增加题目索引
       currentQuestionIndex++;
-    }
-    
-    // 比较英文答案（忽略大小写，但保留空格）
-    function compareEnglishAnswers(userAnswer, correctAnswer) {
-      return userAnswer.toLowerCase() === correctAnswer.toLowerCase();
     }
     
     // 显示反馈
@@ -437,13 +434,10 @@ Artificial Intelligence 人工智能`;
       feedbackContainer.textContent = message;
       feedbackContainer.classList.remove('hidden');
       
-      // 设置反馈样式
       if (type === 'success') {
-        feedbackContainer.classList.remove('bg-red-50', 'text-red-600', 'border', 'border-red-100');
-        feedbackContainer.classList.add('bg-green-50', 'text-green-600', 'border', 'border-green-100');
-      } else if (type === 'error') {
-        feedbackContainer.classList.remove('bg-green-50', 'text-green-600', 'border', 'border-green-100');
-        feedbackContainer.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-100');
+        feedbackContainer.className = 'mb-6 p-4 rounded-lg transition-custom bg-green-50 text-green-600 border border-green-100';
+      } else {
+        feedbackContainer.className = 'mb-6 p-4 rounded-lg transition-custom bg-red-50 text-red-600 border border-red-100';
       }
     }
     
@@ -452,17 +446,16 @@ Artificial Intelligence 人工智能`;
       practiceSection.classList.add('hidden');
       resultSection.classList.remove('hidden');
       
-      // 更新结果统计
       totalCountEl.textContent = questions.length;
       correctCountEl.textContent = correctCount;
       wrongCountEl.textContent = wrongCount;
       
       // 显示错误单词
-      if (wrongWords.length === 0) {
+      if (persistentWrongWords.length === 0) {
         wrongWordsList.innerHTML = '<p class="text-neutral text-sm italic">没有错误单词，太棒了！</p>';
       } else {
         let html = '';
-        wrongWords.forEach(word => {
+        persistentWrongWords.forEach(word => {
           html += `<div class="p-2 border-b border-gray-100 last:border-0">
                     <span class="font-medium">${word.english}</span> - ${word.chinese}
                   </div>`;
@@ -480,28 +473,27 @@ Artificial Intelligence 人工智能`;
     
     // 再次练习
     function retryPractice() {
-      resetPracticeState();
+      partialResetPracticeState();
       createQuestions(wordList);
       
       resultSection.classList.add('hidden');
       practiceSection.classList.remove('hidden');
-      
       nextQuestion();
     }
     
-    // 只练习错误单词
+    // 只练习错误单词 - 核心修复：使用persistentWrongWords保留错误单词
     function retryWrongPractice() {
-      if (wrongWords.length === 0) {
-        retryPractice();
+      if (persistentWrongWords.length === 0) {
+        showFeedback('没有错误单词，将重新练习所有单词', 'success');
+        setTimeout(retryPractice, 1500);
         return;
       }
       
-      resetPracticeState();
-      createQuestions(wrongWords);
+      partialResetPracticeState(); // 使用部分重置，保留persistentWrongWords
+      createQuestions(persistentWrongWords); // 使用持久化错误单词列表
       
       resultSection.classList.add('hidden');
       practiceSection.classList.remove('hidden');
-      
       nextQuestion();
     }
     
