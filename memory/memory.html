@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>单词记忆练习</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5', // 主色调：靛蓝色，代表知识和专注
+            secondary: '#10B981', // 辅助色：绿色，代表进步和正确
+            danger: '#EF4444',    // 错误色：红色
+            neutral: '#64748B',   // 中性色：灰色
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+      }
+      .transition-custom {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- 标题区域 -->
+    <header class="text-center mb-10">
+      <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-gray-800 mb-2">单词记忆练习</h1>
+      <p class="text-neutral text-lg">输入单词表，开始你的记忆之旅</p>
+    </header>
+    
+    <main class="space-y-8">
+      <!-- 单词表输入区域 -->
+      <section id="wordInputSection" class="bg-white rounded-xl p-6 card-shadow transition-custom">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fa fa-list-ul text-primary mr-2"></i>单词表输入
+        </h2>
+        <p class="text-neutral text-sm mb-4">请输入中英文单词对照（一行一组，格式：英文,中文 或 英文 中文）</p>
+        <div class="space-y-4">
+          <textarea 
+            id="wordListInput" 
+            class="w-full h-40 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom resize-none"
+            placeholder="例如：
+apple,苹果
+book 书
+computer 电脑
+..."
+          ></textarea>
+          <div class="flex flex-wrap gap-3">
+            <button 
+              id="startPracticeBtn" 
+              class="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 focus:ring-4 focus:ring-primary/20 font-medium transition-custom flex items-center"
+            >
+              <i class="fa fa-play mr-2"></i>开始练习
+            </button>
+            <button 
+              id="exampleBtn" 
+              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-custom flex items-center"
+            >
+              <i class="fa fa-file-text-o mr-2"></i>加载示例
+            </button>
+            <button 
+              id="clearBtn" 
+              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-custom flex items-center"
+            >
+              <i class="fa fa-trash-o mr-2"></i>清空
+            </button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 练习区域 (默认隐藏) -->
+      <section id="practiceSection" class="hidden bg-white rounded-xl p-6 card-shadow transition-custom">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fa fa-graduation-cap text-primary mr-2"></i>单词练习
+          </h2>
+          <div class="text-sm text-neutral">
+            进度: <span id="progressText">0/0</span>
+          </div>
+        </div>
+        
+        <!-- 题目显示 -->
+        <div id="questionContainer" class="mb-6 p-5 border border-gray-100 rounded-lg bg-gray-50 min-h-[100px] flex items-center justify-center">
+          <p class="text-2xl font-medium text-gray-700" id="questionText">准备开始练习...</p>
+        </div>
+        
+        <!-- 答案输入 -->
+        <div class="mb-6">
+          <label for="answerInput" class="block text-sm font-medium text-gray-700 mb-2">请输入答案:</label>
+          <input 
+            type="text" 
+            id="answerInput" 
+            class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom text-lg"
+            placeholder="在这里输入答案..."
+          >
+        </div>
+        
+        <!-- 反馈区域 -->
+        <div id="feedbackContainer" class="mb-6 hidden p-4 rounded-lg transition-custom"></div>
+        
+        <!-- 按钮区域 -->
+        <div class="flex flex-wrap gap-3">
+          <button 
+            id="checkAnswerBtn" 
+            class="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 focus:ring-4 focus:ring-primary/20 font-medium transition-custom flex items-center"
+          >
+            <i class="fa fa-check mr-2"></i>检查答案
+          </button>
+          <button 
+            id="nextQuestionBtn" 
+            class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-custom flex items-center hidden"
+          >
+            <i class="fa fa-arrow-right mr-2"></i>下一题
+          </button>
+          <button 
+            id="returnBtn" 
+            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-custom ml-auto flex items-center"
+          >
+            <i class="fa fa-arrow-left mr-2"></i>返回
+          </button>
+        </div>
+      </section>
+      
+      <!-- 练习结果区域 (默认隐藏) -->
+      <section id="resultSection" class="hidden bg-white rounded-xl p-6 card-shadow transition-custom">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+          <i class="fa fa-bar-chart text-primary mr-2"></i>练习结果
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="p-4 bg-gray-50 rounded-lg text-center">
+            <p class="text-sm text-neutral mb-1">总题数</p>
+            <p class="text-2xl font-bold text-gray-800" id="totalCount">0</p>
+          </div>
+          <div class="p-4 bg-green-50 rounded-lg text-center">
+            <p class="text-sm text-green-600 mb-1">正确</p>
+            <p class="text-2xl font-bold text-green-600" id="correctCount">0</p>
+          </div>
+          <div class="p-4 bg-red-50 rounded-lg text-center">
+            <p class="text-sm text-red-600 mb-1">错误</p>
+            <p class="text-2xl font-bold text-red-600" id="wrongCount">0</p>
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="font-medium text-gray-800 mb-3">错误单词列表</h3>
+          <div id="wrongWordsList" class="space-y-2 max-h-40 overflow-y-auto p-3 bg-gray-50 rounded-lg">
+            <p class="text-neutral text-sm italic">没有错误单词</p>
+          </div>
+        </div>
+        
+        <div class="flex gap-3">
+          <button 
+            id="retryBtn" 
+            class="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 focus:ring-4 focus:ring-primary/20 font-medium transition-custom flex items-center"
+          >
+            <i class="fa fa-refresh mr-2"></i>再次练习
+          </button>
+          <button 
+            id="retryWrongBtn" 
+            class="px-6 py-2.5 bg-secondary text-white rounded-lg hover:bg-secondary/90 focus:ring-4 focus:ring-secondary/20 font-medium transition-custom flex items-center"
+          >
+            <i class="fa fa-exclamation-circle mr-2"></i>只练习错误单词
+          </button>
+        </div>
+      </section>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="mt-16 text-center text-neutral text-sm">
+      <p>单词记忆练习 &copy; 2023</p>
+    </footer>
+  </div>
+
+  <script>
+    // 全局变量
+    let wordList = [];          // 单词列表 [{english, chinese}]
+    let currentQuestion = null; // 当前题目
+    let questions = [];         // 题目队列
+    let currentQuestionIndex = 0; // 当前题目索引
+    let correctCount = 0;       // 正确计数
+    let wrongCount = 0;         // 错误计数
+    let wrongWords = [];        // 错误的单词
+    
+    // DOM 元素
+    const wordInputSection = document.getElementById('wordInputSection');
+    const practiceSection = document.getElementById('practiceSection');
+    const resultSection = document.getElementById('resultSection');
+    const wordListInput = document.getElementById('wordListInput');
+    const startPracticeBtn = document.getElementById('startPracticeBtn');
+    const exampleBtn = document.getElementById('exampleBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const questionText = document.getElementById('questionText');
+    const answerInput = document.getElementById('answerInput');
+    const checkAnswerBtn = document.getElementById('checkAnswerBtn');
+    const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+    const returnBtn = document.getElementById('returnBtn');
+    const feedbackContainer = document.getElementById('feedbackContainer');
+    const progressText = document.getElementById('progressText');
+    const totalCountEl = document.getElementById('totalCount');
+    const correctCountEl = document.getElementById('correctCount');
+    const wrongCountEl = document.getElementById('wrongCount');
+    const wrongWordsList = document.getElementById('wrongWordsList');
+    const retryBtn = document.getElementById('retryBtn');
+    const retryWrongBtn = document.getElementById('retryWrongBtn');
+    
+    // 事件监听
+    startPracticeBtn.addEventListener('click', startPractice);
+    exampleBtn.addEventListener('click', loadExample);
+    clearBtn.addEventListener('click', clearInput);
+    checkAnswerBtn.addEventListener('click', checkAnswer);
+    nextQuestionBtn.addEventListener('click', nextQuestion);
+    returnBtn.addEventListener('click', returnToInput);
+    retryBtn.addEventListener('click', retryPractice);
+    retryWrongBtn.addEventListener('click', retryWrongPractice);
+    answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (checkAnswerBtn.classList.contains('hidden')) {
+          nextQuestion();
+        } else {
+          checkAnswer();
+        }
+      }
+    });
+    
+    // 加载示例单词表
+    function loadExample() {
+      const example = `apple,苹果
+banana,香蕉
+book,书
+computer,电脑
+friend,朋友
+happy,开心的
+school,学校
+teacher,老师
+water,水
+family,家庭`;
+      wordListInput.value = example;
+    }
+    
+    // 清空输入
+    function clearInput() {
+      wordListInput.value = '';
+    }
+    
+    // 解析单词列表
+    function parseWordList(input) {
+      const lines = input.trim().split('\n');
+      const words = [];
+      
+      lines.forEach((line, index) => {
+        if (!line.trim()) return;
+        
+        // 支持逗号或空格分隔
+        let parts = line.split(/[,，\s]+/).filter(part => part.trim() !== '');
+        
+        if (parts.length >= 2) {
+          words.push({
+            english: parts[0].trim(),
+            chinese: parts.slice(1).join(' ').trim()
+          });
+        }
+      });
+      
+      return words;
+    }
+    
+    // 开始练习
+    function startPractice() {
+      const input = wordListInput.value.trim();
+      
+      if (!input) {
+        showFeedback('请输入单词表', 'error');
+        return;
+      }
+      
+      // 解析单词列表
+      wordList = parseWordList(input);
+      
+      if (wordList.length < 1) {
+        showFeedback('请输入有效的单词表（格式：英文,中文 或 英文 中文）', 'error');
+        return;
+      }
+      
+      // 初始化练习参数
+      resetPracticeState();
+      createQuestions(wordList);
+      
+      // 显示练习区域
+      wordInputSection.classList.add('hidden');
+      practiceSection.classList.remove('hidden');
+      resultSection.classList.add('hidden');
+      
+      // 显示第一题
+      nextQuestion();
+    }
+    
+    // 重置练习状态
+    function resetPracticeState() {
+      currentQuestionIndex = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      wrongWords = [];
+      questions = [];
+      feedbackContainer.classList.add('hidden');
+      checkAnswerBtn.classList.remove('hidden');
+      nextQuestionBtn.classList.add('hidden');
+    }
+    
+    // 创建题目
+    function createQuestions(words) {
+      // 复制单词列表以避免修改原数组
+      const wordsCopy = [...words];
+      
+      // 为每个单词创建两个可能的题目类型：看英文写中文，看中文写英文
+      wordsCopy.forEach(word => {
+        // 50%概率创建看英文写中文的题目
+        if (Math.random() > 0.5) {
+          questions.push({
+            type: 'englishToChinese',
+            question: word.english,
+            answer: word.chinese,
+            word: word
+          });
+        } else {
+          questions.push({
+            type: 'chineseToEnglish',
+            question: word.chinese,
+            answer: word.english,
+            word: word
+          });
+        }
+      });
+      
+      // 随机打乱题目顺序
+      shuffleArray(questions);
+    }
+    
+    // 显示下一题
+    function nextQuestion() {
+      if (currentQuestionIndex >= questions.length) {
+        // 所有题目完成，显示结果
+        showResult();
+        return;
+      }
+      
+      // 重置UI状态
+      feedbackContainer.classList.add('hidden');
+      checkAnswerBtn.classList.remove('hidden');
+      nextQuestionBtn.classList.add('hidden');
+      answerInput.value = '';
+      
+      // 获取当前题目
+      currentQuestion = questions[currentQuestionIndex];
+      
+      // 显示题目
+      questionText.textContent = currentQuestion.question;
+      
+      // 更新进度
+      progressText.textContent = `${currentQuestionIndex + 1}/${questions.length}`;
+      
+      // 聚焦到输入框
+      answerInput.focus();
+    }
+    
+    // 检查答案
+    function checkAnswer() {
+      const userAnswer = answerInput.value.trim();
+      const correctAnswer = currentQuestion.answer;
+      
+      // 检查答案是否正确（不区分大小写）
+      const isCorrect = currentQuestion.type === 'chineseToEnglish' 
+        ? userAnswer.toLowerCase() === correctAnswer.toLowerCase()
+        : userAnswer === correctAnswer;
+      
+      // 显示反馈
+      if (isCorrect) {
+        showFeedback(`正确！答案是：${correctAnswer}`, 'success');
+        correctCount++;
+      } else {
+        showFeedback(`错误！正确答案是：${correctAnswer}`, 'error');
+        wrongCount++;
+        // 添加到错误单词列表（避免重复）
+        if (!wrongWords.some(w => w.english === currentQuestion.word.english)) {
+          wrongWords.push(currentQuestion.word);
+        }
+      }
+      
+      // 更新按钮状态
+      checkAnswerBtn.classList.add('hidden');
+      nextQuestionBtn.classList.remove('hidden');
+      
+      // 增加题目索引
+      currentQuestionIndex++;
+    }
+    
+    // 显示反馈
+    function showFeedback(message, type) {
+      feedbackContainer.textContent = message;
+      feedbackContainer.classList.remove('hidden');
+      
+      // 设置反馈样式
+      if (type === 'success') {
+        feedbackContainer.classList.remove('bg-red-50', 'text-red-600', 'border', 'border-red-100');
+        feedbackContainer.classList.add('bg-green-50', 'text-green-600', 'border', 'border-green-100');
+      } else if (type === 'error') {
+        feedbackContainer.classList.remove('bg-green-50', 'text-green-600', 'border', 'border-green-100');
+        feedbackContainer.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-100');
+      }
+    }
+    
+    // 显示结果
+    function showResult() {
+      practiceSection.classList.add('hidden');
+      resultSection.classList.remove('hidden');
+      
+      // 更新结果统计
+      totalCountEl.textContent = questions.length;
+      correctCountEl.textContent = correctCount;
+      wrongCountEl.textContent = wrongCount;
+      
+      // 显示错误单词
+      if (wrongWords.length === 0) {
+        wrongWordsList.innerHTML = '<p class="text-neutral text-sm italic">没有错误单词，太棒了！</p>';
+      } else {
+        let html = '';
+        wrongWords.forEach(word => {
+          html += `<div class="p-2 border-b border-gray-100 last:border-0">
+                    <span class="font-medium">${word.english}</span> - ${word.chinese}
+                  </div>`;
+        });
+        wrongWordsList.innerHTML = html;
+      }
+    }
+    
+    // 返回输入界面
+    function returnToInput() {
+      practiceSection.classList.add('hidden');
+      resultSection.classList.add('hidden');
+      wordInputSection.classList.remove('hidden');
+    }
+    
+    // 再次练习
+    function retryPractice() {
+      resetPracticeState();
+      createQuestions(wordList);
+      
+      resultSection.classList.add('hidden');
+      practiceSection.classList.remove('hidden');
+      
+      nextQuestion();
+    }
+    
+    // 只练习错误单词
+    function retryWrongPractice() {
+      if (wrongWords.length === 0) {
+        retryPractice();
+        return;
+      }
+      
+      resetPracticeState();
+      createQuestions(wrongWords);
+      
+      resultSection.classList.add('hidden');
+      practiceSection.classList.remove('hidden');
+      
+      nextQuestion();
+    }
+    
+    // 随机打乱数组顺序
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+  </script>
+</body>
+</html>
