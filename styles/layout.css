@@ -1,0 +1,100 @@
+@import url(navi.css);
+
+body{
+	margin:0;
+	padding:0;
+	font-size:13px;
+	font-family:Georgia, "Times New Roman", Times, serif;
+	color:#999999;
+	background-color:white;
+	}
+
+img{display:block; margin:0; padding:0; border:none;}
+.justify{text-align:justify;}
+.bold{font-weight:bold;}
+.center{text-align:center;}
+.right{text-align:right;}
+.nostart{list-style-type:none; margin:0; padding:0;}
+.clear{clear:both;}
+br.clear{clear:both; margin-top:-15px;}
+
+a{outline:none; text-decoration:none;}
+
+.imgl, .imgr{border:1px solid #C7C5C8; padding:5px;}
+.imgl{float:left; margin:0 8px 8px 0; clear:left;}
+.imgr{float:right; margin:0 0 8px 8px; clear:right;}
+
+div.wrapper{
+	display:block;
+	width:100%;
+	margin:0;
+	text-align:left;
+	}
+
+div.wrapper h1, div.wrapper h2, div.wrapper h3, div.wrapper h4, div.wrapper h5, div.wrapper h6{
+	margin:0 0 15px 0;
+	padding:0;
+	font-size:20px;
+	font-weight:normal;
+	line-height:normal;
+	}
+
+.col1, .col1 a{color:#666666; background-color:#000000;}
+.col2{color:#FFFFFF; background-color:#96b97d;}
+.col3{color:#999999; background-color:#151515; padding:20px 0;}
+.col3 a{color:#A97891; background-color:#151515;}
+/* .col4{color:#999999; background-color:#151515;} */
+/* .col4 a{color:#A97891; background-color:#151515;} */
+/* .col5{color:#CCCCCC; background-color:#1D1D1D; border-top:1px dotted #E7BCE2; border-bottom:1px dotted #E7BCE2;} */
+/* .col5 a{color:#E7BCE2; background-color:#1D1D1D;} */
+/* .col6, .col6 a{color:#666666; background-color:#151515;} */
+
+
+#header, #topbar, #breadcrumb, #featured_intro, #container, #footer, #copyright{
+	position:relative;
+	margin:0 auto 0;
+	display:block;
+	width:960px;
+	}
+
+
+#header{
+	padding:2px 0 20px 0;
+	}
+
+#header .fl_left{
+	display:block;
+	float:left;
+	margin-top:17px;
+	overflow:hidden;
+	}
+
+#header .fl_right{
+	display:block;
+	float:right;
+	width:468px;
+	height:60px;
+	margin-top:21px;
+	overflow:hidden;
+	}
+
+#header h1, #header p, #header ul{
+	margin:0;
+	padding:0;
+	list-style:none;
+	line-height:normal;
+	}
+
+#header h1 a{
+	font-size:36px;
+	color:#96b97d;;
+	background-color:#000000;
+	}
+
+#header .fl_left p{
+	margin-top:5px;
+	}
+
+
+
+
