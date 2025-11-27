@@ -178,7 +178,7 @@ body {
     }
 
     .right-sidebar {
-        width: 80%;
+        width: 30%;
         right: -80%;
     }
 }
@@ -231,6 +231,10 @@ td::before {
         0 0 10px var(--light),
         0 0 1px var(--black);
     z-index: 10;
+    font-size: clamp(0.5rem, 2vw, 1rem);
+    /* 核心：根据视口宽度动态调整 */
+    overflow-wrap: break-word;
+    /* 防止文字溢出 */
 }
 
 .tab-content {
@@ -259,11 +263,19 @@ td div {
     justify-content: center;
     align-items: center;
     padding: 8px;
-    overflow: auto;
     opacity: 0.8;
     transition: all 0.5s ease;
     box-shadow: 0 0 50px var(--white);
+    font-size: clamp(0.3rem, 1.5vw, 1rem);
+    /* 缩小最小字体下限 */
+    white-space: nowrap;
+    /* 禁止文字换行 */
+    overflow: hidden;
+    /* 隐藏溢出内容 */
+    text-overflow: ellipsis;
+    /* 溢出时显示省略号 */
 }
+
 
 td div a {
     text-decoration: none;

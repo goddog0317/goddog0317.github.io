@@ -69,3 +69,38 @@ document.querySelectorAll('.tab-header').forEach(header => {
         content.classList.toggle('active');
     });
 });
+
+// 背景图片滚动
+document.addEventListener('DOMContentLoaded', function () {
+    // 获取需要应用效果的元素（这里假设是body，也可以是特定容器）
+    const targetElement = document.body;
+
+    // 设置初始背景图片（如果CSS中已设置可以省略）
+    targetElement.style.backgroundAttachment = "fixed"; // 固定背景防止默认滚动
+    targetElement.style.backgroundSize = "cover";
+    targetElement.style.backgroundPosition = "center center";
+
+    // 监听滚动事件
+    window.addEventListener('scroll', function () {
+        // 计算滚动百分比
+        const scrollTop = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const documentHeight = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+        );
+        const totalScrollable = documentHeight - windowHeight;
+        const scrollPercentage = totalScrollable > 0 ? scrollTop / totalScrollable : 0;
+
+        // 根据滚动百分比计算背景移动位置（这里以Y轴为例，范围-50%到50%）
+        const bgMoveRange = 50; // 移动范围百分比
+        const bgYPosition = (bgMoveRange * scrollPercentage + bgMoveRange) / 5;
+        // const bgYPosition = scrollPercentage + 50;
+
+        // 应用背景位置
+        targetElement.style.backgroundPosition = `center ${bgYPosition}%`;
+    });
+});
