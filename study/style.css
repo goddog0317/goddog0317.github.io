@@ -282,10 +282,12 @@ td div {
     box-shadow: 0 0 50px var(--white);
     font-size: clamp(0.3rem, 1.5vw, 1rem);
     /* 缩小最小字体下限 */
-    white-space: nowrap;
+    /* white-space: nowrap; */
     /* 禁止文字换行 */
-    overflow: hidden;
+    /* overflow: hidden; */
     /* 隐藏溢出内容 */
+    word-break: break-all;
+    /* 强制长单词换行 */
     text-overflow: ellipsis;
     /* 溢出时显示省略号 */
 }
