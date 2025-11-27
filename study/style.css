@@ -170,7 +170,7 @@ body {
 
 @media (orientation: portrait) {
     body {
-        background-image: url('./imgine/004.jpg');
+        background-image: url('../image/004.jpg');
     }
 
     .vertical-nav {
@@ -185,7 +185,7 @@ body {
 
 @media (orientation: landscape) {
     body {
-        background-image: url('./imgine/011.jpg');
+        background-image: url('../image/011.jpg');
     }
 }
 
@@ -274,6 +274,7 @@ td div:hover {
     transform: scale(1.2);
     opacity: 1;
     z-index: 20;
+    background-color: var(--white);
 }
 
 td:nth-last-child(2),
