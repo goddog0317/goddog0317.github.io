@@ -103,4 +103,5 @@ document.addEventListener('DOMContentLoaded', function () {
         // 应用背景位置
         targetElement.style.backgroundPosition = `center ${bgYPosition}%`;
     });
+
 });
